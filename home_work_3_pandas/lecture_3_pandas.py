@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import os
@@ -114,17 +115,40 @@ def answer_two():
 
     # but first 13 countries isn't country
     for ind in range(15):
-        print("{:>55} => {}".format(avgGDP.iloc[ind][0], avgGDP.iloc[ind][-1]))
+        print("{:>45} => {}".format(avgGDP.iloc[ind][0], avgGDP.iloc[ind][-1]))
 
-    avgGDP = 0
+    # print(avgGDP)
 
     return avgGDP
 
 
 # By how much had the GDP changed over the 10 year span for the country with the 6th largest average GDP?
 def answer_three():
-    res = 0
-    return res
+    avgGDP = answer_two()
+    avgGDP_list = []
+
+    for it in range(10):
+        avgGDP_list.append(avgGDP.iloc[5][-2 - it])
+
+    avgGDP_list.reverse()
+
+    x_ticks = [2012 + shift for shift in range(10)]
+
+    # print(x_ticks)
+    # print(avgGDP_list)
+
+    fig, ax = plt.subplots()
+    ax.plot(avgGDP_list)
+    plt.title("Country name: " + avgGDP.iloc[5][0])
+    plt.xlabel("Years")
+    plt.ylabel("GDP in year")
+    plt.xticks([x for x in range(10)], [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021])
+    # bad view ####################################
+    # plt.ticklabel_format(style='plain', axis='y')
+    plt.show()
+
+    # return changed in 10 years
+    return avgGDP_list[-1] - avgGDP_list[0]
 
 
 def answer_four():
