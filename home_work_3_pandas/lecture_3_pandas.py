@@ -66,11 +66,19 @@ def answer_one():
     path_to_file_xlsx = os.path.join(os.getcwd(), 'scimagojr_country_rank_1996-2021.xlsx')
     ScimEn = pd.read_excel(path_to_file_xlsx)
 
-    # ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 'Citations per document', 'H index', 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', 2012', '2013', '2014', '2015']
-    energy_and_GDP = pd.merge(energy_df, GDP.drop(columns=GDP.columns[1:50]), how='outer', left_on='Country',
+    # ['Rank', 'Documents', 'Citable documents', 'Citations', 'Self-citations', 'Citations per document', 'H index',
+    # 'Energy Supply', 'Energy Supply per Capita', '% Renewable', '2006', '2007', '2008', '2009', '2010', '2011', 2012',
+    # '2013', '2014', '2015']
+    energy_and_GDP = pd.merge(energy_df,
+                              GDP.drop(columns=GDP.columns[1:50]),
+                              how='outer',
+                              left_on='Country',
                               right_on='Country Name')
-    all_df = pd.merge(ScimEn.iloc[:15], energy_and_GDP.drop(columns=energy_and_GDP.columns[15:]), how='outer',
-                      left_on='Country', right_on='Country')
+    all_df = pd.merge(ScimEn.iloc[:15],
+                      energy_and_GDP.drop(columns=energy_and_GDP.columns[15:]),
+                      how='outer',
+                      left_on='Country',
+                      right_on='Country')
 
     all_df = all_df.drop(columns=all_df.columns[1:3])
     all_df = all_df.drop(columns=['Country Name'])
@@ -156,7 +164,8 @@ def answer_three():
     return avgGDP_list[-1] - avgGDP_list[0]
 
 
-# Create a new column that is the ratio of Self-Citations to Total Citations. What is the maximum value for this new column, and what country has the highest ratio?
+# Create a new column that is the ratio of Self-Citations to Total Citations.
+# What is the maximum value for this new column, and what country has the highest ratio?
 # This function should return a tuple with the name of the country and the ratio.
 def answer_four():
     path_to_file_xlsx = os.path.join(os.getcwd(), 'scimagojr_country_rank_1996-2021.xlsx')
@@ -186,22 +195,116 @@ def answer_four():
     return (country, citations)
 
 
-# Create a column that estimates the population using Energy Supply and Energy Supply per capita. What is the third most populous country according to this estimate?
+# Create a column that estimates the population using Energy Supply and Energy Supply per capita.
+# What is the third most populous country according to this estimate?
 # This function should return a single string value.
 def answer_five():
-    res = 0
-    return res
+    # set unlimited for all showing dataframe
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
+
+    path_to_file_excel = os.path.join(os.getcwd(), "Energy_Indicators.xls")
+    energy_df = pd.read_excel(path_to_file_excel)
+    # don't use un need first two column
+    energy_df = energy_df.drop(columns=energy_df.columns[0:2])
+    # skip first 16 rows, because it's bad values
+    energy_df = energy_df.iloc[17:244]
+    energy_df.columns = ['Country', 'Energy Supply', 'Energy Supply per Capita', '% Renewable']
+    # converts to petajoule
+    energy_df['Energy Supply'] = energy_df['Energy Supply'].apply(lambda x: np.NaN if x == '...' else x / 1_000_000)
+    # converts all `...` to np.NaN
+    energy_df['Energy Supply per Capita'] = energy_df['Energy Supply per Capita'].apply(
+        lambda x: np.NaN if x == '...' else x)
+    # delete number from name of country
+    energy_df['Country'] = energy_df['Country'].apply(lambda x: ''.join(ch for ch in str(x) if not ch.isdigit()))
+
+    # add empty column with 0.0
+    energy_df = energy_df.assign(PopulationByEnergySupply=0.0)
+
+    for index, row in energy_df.iterrows():
+        energy_df.at[index, 'PopulationByEnergySupply'] = row.iloc[1] * 1_000_000 / row.iloc[2] * 1_000_000
+
+    energy_df = energy_df.sort_values(by=['PopulationByEnergySupply'], ascending=False)
+
+    # FOR CHECKING
+    # print(energy_df.iloc[212])
+    # print(energy_df.iloc[79])
+    # print(energy_df.iloc[0])
+    # print(type(energy_df.iloc[79][2]))
+
+    # answer is China :)
+    return energy_df.iloc[0][0]
 
 
-# Create a column that estimates the number of citable documents per person. What is the correlation between the number of citable documents per capita and the energy supply per capita? Use the .corr() method, (Pearson's correlation).
+# Create a column that estimates the number of citable documents per person.
+# What is the correlation between the number of citable documents per capita and the energy supply per capita?
+# Use the .corr() method, (Pearson's correlation).
 # This function should return a single number.
 def answer_six():
-    res = 0
-    return res
+    # set unlimited for all showing dataframe
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
+
+    path_to_file_xlsx = os.path.join(os.getcwd(), 'scimagojr_country_rank_1996-2021.xlsx')
+    df = pd.read_excel(path_to_file_xlsx)
+
+    path_to_file_excel = os.path.join(os.getcwd(), "Energy_Indicators.xls")
+    energy_df = pd.read_excel(path_to_file_excel)
+
+    # don't use un need first two column
+    energy_df = energy_df.drop(columns=energy_df.columns[0:2])
+    # skip first 16 rows, because it's bad values
+    energy_df = energy_df.iloc[17:244]
+    energy_df.columns = ['Country', 'Energy Supply', 'Energy Supply per Capita', '% Renewable']
+    # converts to petajoule
+    energy_df['Energy Supply'] = energy_df['Energy Supply'].apply(lambda x: np.NaN if x == '...' else x / 1_000_000)
+    # converts all `...` to np.NaN
+    energy_df['Energy Supply per Capita'] = energy_df['Energy Supply per Capita'].apply(
+        lambda x: np.NaN if x == '...' else x)
+    # delete number from name of country
+    energy_df['Country'] = energy_df['Country'].apply(lambda x: ''.join(ch for ch in str(x) if not ch.isdigit()))
+
+    # add empty column with 0.0
+    energy_df = energy_df.assign(PopulationByEnergySupply=0.0)
+
+    for index, row in energy_df.iterrows():
+        energy_df.at[index, 'PopulationByEnergySupply'] = row.iloc[1] * 1_000_000 / row.iloc[2] * 1_000_000
+
+    # add empty column with 0.0
+    df = df.assign(CitablePerPerson=0.0)
+
+    merge_df = pd.merge(energy_df,
+                        df,
+                        how='outer',
+                        left_on='Country',
+                        right_on='Country')
+
+    for index, row in merge_df.iterrows():
+        div = row.iloc[9] if row.iloc[9] != 0 else 1
+        merge_df.at[index, 'CitablePerPerson'] = row.iloc[4] / div
+
+    list_of_energy_supply_per_person = []
+    list_of_citable_per_person = []
+    for index, row in merge_df.iterrows():
+        list_of_energy_supply_per_person.append(row.iloc[2])
+        list_of_citable_per_person.append(row.iloc[-1])
+
+    # FOR CHECKING
+    # print(merge_df.iloc[79])
+    # print(list_of_energy_supply_per_person)
+    # print(list_of_citable_per_person)
+
+    s1 = pd.Series(list_of_energy_supply_per_person)
+    s2 = pd.Series(list_of_citable_per_person)
+
+    return s1.corr(s2, method='pearson')
 
 
-# Use the following dictionary to group the Countries by Continent, then create a dateframe that displays the sample size (the number of countries in each continent bin), and the sum, mean, and std deviation for the estimated population of each country.
-# This function should return a DataFrame with index named Continent ['Asia', 'Australia', 'Europe', 'North America', 'South America'] and columns ['size', 'sum', 'mean', 'std']
+# Use the following dictionary to group the Countries by Continent, then create a dateframe that displays
+# the sample size (the number of countries in each continent bin), and the sum, mean, and std deviation for
+# the estimated population of each country.
+# This function should return a DataFrame with index named Continent ['Asia', 'Australia', 'Europe', 'North America',
+# 'South America'] and columns ['size', 'sum', 'mean', 'std']
 def answer_seven():
     res = 0
     return res
