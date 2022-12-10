@@ -85,14 +85,14 @@ def answer_one():
     all_df = all_df[:15]
 
     # FOR CHECKING
-    # print('###')
-    # print(energy_df)
-    # print('###')
-    # print(GDP)
-    # print('###')
-    # print(ScimEn)
-    # print('###')
-    # print(all_df)
+    print('###')
+    print(energy_df)
+    print('###')
+    print(GDP)
+    print('###')
+    print(ScimEn)
+    print('###')
+    print(all_df)
 
     return all_df
 
@@ -285,6 +285,7 @@ def answer_six():
 
     list_of_energy_supply_per_person = []
     list_of_citable_per_person = []
+
     for index, row in merge_df.iterrows():
         list_of_energy_supply_per_person.append(row.iloc[2])
         list_of_citable_per_person.append(row.iloc[-1])
@@ -306,5 +307,107 @@ def answer_six():
 # This function should return a DataFrame with index named Continent ['Asia', 'Australia', 'Europe', 'North America',
 # 'South America'] and columns ['size', 'sum', 'mean', 'std']
 def answer_seven():
-    res = 0
-    return res
+    # Africa        => Africa/Middle East,  Africa
+    # Asia          => Asiatic Region,      Middle East
+    # Australia     => Pacific Region
+    # Europe        => Western Europe,      Eastern Europe
+    # North America => Northern America
+    # South America => Latin America
+
+    # set unlimited for all showing dataframe
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
+
+    path_to_file_xlsx = os.path.join(os.getcwd(), 'scimagojr_country_rank_1996-2021.xlsx')
+    df = pd.read_excel(path_to_file_xlsx)
+
+    path_to_file_excel = os.path.join(os.getcwd(), "Energy_Indicators.xls")
+    energy_df = pd.read_excel(path_to_file_excel)
+
+    # don't use un need first two column
+    energy_df = energy_df.drop(columns=energy_df.columns[0:2])
+    # skip first 16 rows, because it's bad values
+    energy_df = energy_df.iloc[17:244]
+    energy_df.columns = ['Country', 'Energy Supply', 'Energy Supply per Capita', '% Renewable']
+    # converts to petajoule
+    energy_df['Energy Supply'] = energy_df['Energy Supply'].apply(lambda x: np.NaN if x == '...' else x / 1_000_000)
+    # converts all `...` to np.NaN
+    energy_df['Energy Supply per Capita'] = energy_df['Energy Supply per Capita'].apply(
+        lambda x: np.NaN if x == '...' else x)
+    # delete number from name of country
+    energy_df['Country'] = energy_df['Country'].apply(lambda x: ''.join(ch for ch in str(x) if not ch.isdigit()))
+
+    # add empty column with 0.0
+    energy_df = energy_df.assign(PopulationByEnergySupply=0.0)
+
+    for index, row in energy_df.iterrows():
+        energy_df.at[index, 'PopulationByEnergySupply'] = row.iloc[1] * 1_000_000 / row.iloc[2] * 1_000_000
+
+    # add empty column with 0.0
+    df = df.assign(CitablePerPerson=0.0)
+
+    merge_df = pd.merge(energy_df,
+                        df,
+                        how='outer',
+                        left_on='Country',
+                        right_on='Country')
+
+    for index, row in merge_df.iterrows():
+        div = row.iloc[9] if row.iloc[9] != 0 else 1
+        merge_df.at[index, 'CitablePerPerson'] = row.iloc[4] / div
+
+    merge_df["PopulationByEnergySupply"] = merge_df["PopulationByEnergySupply"].replace(np.nan, 0)
+
+    # Africa        => Africa/Middle East,  Africa
+    # Asia          => Asiatic Region,      Middle East
+    # Australia     => Pacific Region
+    # Europe        => Western Europe,      Eastern Europe
+    # North America => Northern America
+    # South America => Latin America
+
+    list_of_size = [0, 0, 0, 0, 0, 0]
+    list_of_sum = [0, 0, 0, 0, 0, 0]
+    list_of_mean = [[],[],[],[],[],[]]
+    list_of_std = [[],[],[],[],[],[]]
+
+    def set_data_to_lists(ind, data):
+        list_of_size[ind] += 1
+        list_of_sum[ind] += data
+        list_of_mean[ind].append(data)
+        list_of_std[ind].append(data)
+
+    for index, row in merge_df.iterrows():
+        item = row.iloc[6]
+        population = row.iloc[4]
+
+        if item == 'Africa' or item == 'Africa/Middle East':
+            set_data_to_lists(0, population)
+        elif item == 'Asiatic Region' or item == 'Middle East':
+            set_data_to_lists(1, population)
+        elif item == 'Pacific Region':
+            set_data_to_lists(2, population)
+        elif item == 'Western Europe' or item == 'Eastern Europe':
+            set_data_to_lists(3, population)
+        elif item == 'Northern America':
+            set_data_to_lists(4, population)
+        elif item == 'Latin America':
+            set_data_to_lists(5, population)
+
+    for index in range(6):
+        list_of_mean[index] = pd.Series(list_of_mean[index]).mean()
+        list_of_std[index] = pd.Series(list_of_std[index]).mean()
+
+    list_for_df = [list_of_size, list_of_sum, list_of_mean, list_of_std]
+
+    res_df = pd.DataFrame(list_for_df,
+                          index=['Size', 'Sum', 'Mean', 'Std'],
+                          columns=['Africa', 'Asia', 'Australia', 'Europe', 'North America', 'South America'])
+
+    # FOR CHECKING
+    pd.set_option('display.float_format', lambda x: '%.3f' % x)
+    # print(merge_df.iloc[79])
+    # print(list_of_energy_supply_per_person)
+    # print(list_of_citable_per_person)
+    # print(res_df)
+
+    return res_df
