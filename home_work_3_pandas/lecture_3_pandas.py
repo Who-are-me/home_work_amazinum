@@ -61,6 +61,8 @@ def answer_one():
     for k, v in dtrcn.items():
         GDP['Country Name'] = GDP['Country Name'].apply(lambda x: v if k == x else x)
 
+    # NEW TASK ###########################################################################
+
     path_to_file_xlsx = os.path.join(os.getcwd(), 'scimagojr_country_rank_1996-2021.xlsx')
     ScimEn = pd.read_excel(path_to_file_xlsx)
 
@@ -75,14 +77,14 @@ def answer_one():
     all_df = all_df[:15]
 
     # FOR CHECKING
-    print('###')
-    print(energy_df)
-    print('###')
-    print(GDP)
-    print('###')
-    print(ScimEn)
-    print('###')
-    print(all_df)
+    # print('###')
+    # print(energy_df)
+    # print('###')
+    # print(GDP)
+    # print('###')
+    # print(ScimEn)
+    # print('###')
+    # print(all_df)
 
     return all_df
 
@@ -115,8 +117,9 @@ def answer_two():
 
     # but first 13 countries isn't country
     for ind in range(15):
-        print("{:>45} => {}".format(avgGDP.iloc[ind][0], avgGDP.iloc[ind][-1]))
+        print("{:>33} => {}".format(avgGDP.iloc[ind][0], avgGDP.iloc[ind][-1]))
 
+    # FOR CHECKING
     # print(avgGDP)
 
     return avgGDP
@@ -133,39 +136,72 @@ def answer_three():
     avgGDP_list.reverse()
 
     x_ticks = [2012 + shift for shift in range(10)]
-
-    # print(x_ticks)
-    # print(avgGDP_list)
+    default_x_ticks = [x for x in range(10)]
 
     fig, ax = plt.subplots()
     ax.plot(avgGDP_list)
     plt.title("Country name: " + avgGDP.iloc[5][0])
     plt.xlabel("Years")
     plt.ylabel("GDP in year")
-    plt.xticks([x for x in range(10)], [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021])
+    plt.xticks(default_x_ticks, x_ticks)
+
     # bad view ####################################
     # plt.ticklabel_format(style='plain', axis='y')
+    # plt.figure(num='Home work by pandas (three answer)')
+
+    # FOR CHECKING
     plt.show()
 
     # return changed in 10 years
     return avgGDP_list[-1] - avgGDP_list[0]
 
 
+# Create a new column that is the ratio of Self-Citations to Total Citations. What is the maximum value for this new column, and what country has the highest ratio?
+# This function should return a tuple with the name of the country and the ratio.
 def answer_four():
-    res = 0
-    return res
+    path_to_file_xlsx = os.path.join(os.getcwd(), 'scimagojr_country_rank_1996-2021.xlsx')
+    df = pd.read_excel(path_to_file_xlsx)
+
+    country = ""
+    citations = 0
+
+    # add empty column with 0.0
+    df = df.assign(SelfCitationsToTotalCitations=0.0)
+
+    for index, row in df.iterrows():
+        div = df.iloc[index][5] if df.iloc[index][5] != 0 else 1
+        df.at[index, 'SelfCitationsToTotalCitations'] = df.iloc[index][6] / div
+
+    df = df.sort_values(by=['SelfCitationsToTotalCitations'], ascending=False)
+
+    country = df.iloc[0][1]
+    citations = df.iloc[0][-1]
+
+    # FOR CHECKING
+    # for index, row in df.iterrows():
+    #     print(row.iloc[-1])
+    # print(df.iloc[0])
+    # print(country, citations)
+
+    return (country, citations)
 
 
+# Create a column that estimates the population using Energy Supply and Energy Supply per capita. What is the third most populous country according to this estimate?
+# This function should return a single string value.
 def answer_five():
     res = 0
     return res
 
 
+# Create a column that estimates the number of citable documents per person. What is the correlation between the number of citable documents per capita and the energy supply per capita? Use the .corr() method, (Pearson's correlation).
+# This function should return a single number.
 def answer_six():
     res = 0
     return res
 
 
+# Use the following dictionary to group the Countries by Continent, then create a dateframe that displays the sample size (the number of countries in each continent bin), and the sum, mean, and std deviation for the estimated population of each country.
+# This function should return a DataFrame with index named Continent ['Asia', 'Australia', 'Europe', 'North America', 'South America'] and columns ['size', 'sum', 'mean', 'std']
 def answer_seven():
     res = 0
     return res
